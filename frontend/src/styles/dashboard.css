@@ -39,8 +39,10 @@
     flex: 1;
 }
 
+.sidebar-nav button,
 .sidebar-nav a {
     display: flex;
+    width: 100%;
     align-items: center;
     gap: 0.75rem;
     padding: 0.8rem 1rem;
@@ -48,12 +50,24 @@
     color: var(--color-text-muted);
     font-weight: 500;
     transition: all var(--transition-fast);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-size: 0.95rem;
 }
 
+.sidebar-nav button:hover,
 .sidebar-nav a:hover,
+.sidebar-nav button.active,
 .sidebar-nav a.active {
-    background: rgba(var(--color-primary), 0.1);
+    background: rgba(var(--color-primary-rgb), 0.1);
     color: var(--color-primary);
+}
+
+.nav-item-disabled {
+    opacity: 0.5;
+    cursor: not-allowed !important;
 }
 
 .sidebar-footer {
@@ -102,9 +116,9 @@
     z-index: 90;
 }
 
-.dashboard-header h2 {
-    font-size: 1.5rem;
-    color: var(--color-text-main);
+.dashboard-header p {
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
 }
 
 .dashboard-content {
@@ -112,11 +126,411 @@
     flex: 1;
 }
 
-.stat-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1.5rem;
+/* Section Cards */
+.section-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
     margin-bottom: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+/* Local Button Utilities to match global index.css but scoped for dashboard */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all var(--transition-bounce);
+    cursor: pointer;
+}
+
+.btn-sm {
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    border-radius: var(--radius-sm);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    color: white;
+    box-shadow: 0 4px 15px rgba(var(--color-primary), 0.3);
+    border: none;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(var(--color-primary), 0.4);
+    color: white;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-main);
+}
+
+.btn-outline:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: rgba(var(--color-primary-rgb), 0.05);
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-main);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.action-btn:hover {
+    border-color: var(--color-primary);
+    background: rgba(var(--color-primary-rgb), 0.05);
+    transform: translateY(-2px);
+}
+
+.action-btn span {
+    font-weight: 500;
+}
+
+/* Internship Grid & Cards */
+.internship-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.internship-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+}
+
+.internship-card:hover {
+    box-shadow: var(--glass-shadow);
+    transform: translateY(-4px);
+    border-color: var(--color-primary);
+}
+
+.card-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.open { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+.status-badge.draft { background: rgba(107, 114, 128, 0.1); color: #6b7280; }
+
+.card-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+.card-footer {
+    padding: 1rem 1.25rem;
+    background: rgba(var(--color-primary-rgb), 0.02);
+    border-top: 1px solid var(--color-border);
+}
+
+.skills-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.skill-tag {
+    padding: 0.2rem 0.6rem;
+    background: var(--color-border);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: var(--color-text-main);
+}
+
+/* Form Styles */
+.post-internship-container {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.form-header {
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 1rem;
+}
+
+.form-section {
+    margin-bottom: 2.5rem;
+}
+
+.form-section h4 {
+    margin-bottom: 1.25rem;
+    color: var(--color-primary);
+    font-size: 1.1rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text-main);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    padding: 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-background);
+    color: var(--color-text-main);
+    font-family: inherit;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+}
+
+/* Skill Selector Labels/Pills */
+.selected-skills-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.75rem 0 1rem 0;
+    min-height: 20px;
+    align-items: center;
+}
+
+.skill-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.85rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-full);
+    color: var(--color-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+}
+
+.skill-pill:hover {
+    background: var(--color-primary);
+    color: white;
+}
+
+.skill-pill-stars {
+    display: flex;
+    gap: 2px;
+}
+
+.pill-star {
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.pill-star:hover {
+    transform: scale(1.4);
+}
+
+.skill-pill-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.1);
+    color: inherit;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    transition: background 0.2s;
+}
+
+.skill-pill:hover .skill-pill-remove {
+    background: rgba(255,255,255,0.2);
+}
+
+.no-skills-text {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+.skill-search-container {
+    position: relative;
+    margin-top: 0.5rem;
+}
+
+.skill-search-input {
+    width: 100%;
+    padding: 0.85rem 1.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-background);
+    color: var(--color-text-main);
+    font-family: inherit;
+    transition: all 0.3s;
+}
+
+.skill-search-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb), 0.1);
+    background: var(--color-surface);
+}
+
+/* Skills Dropdown Refinement */
+.skills-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    z-index: 1000;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+.dropdown-section-title {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    letter-spacing: 0.05em;
+}
+
+.dropdown-item {
+    padding: 0.85rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+    color: var(--color-text-main);
+}
+
+.dropdown-item:hover {
+    background: rgba(var(--color-primary-rgb), 0.05);
+    color: var(--color-primary);
+}
+
+.add-new-skill-option {
+    border-top: 1px solid var(--color-border);
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+}
+
+.add-new-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.add-icon {
+    color: var(--color-primary);
+}
+
+.dropdown-empty {
+    padding: 2rem;
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.form-error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+.loading-state, .empty-state {
+    padding: 4rem;
+    text-align: center;
+    color: var(--color-text-muted);
 }
 
 .stat-card {

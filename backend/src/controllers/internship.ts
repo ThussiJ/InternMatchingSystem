@@ -55,6 +55,8 @@ export const createInternship = async (req: AuthRequest, res: Response) => {
             skills // Array of { skill_id: string, required_level: number, weight: number, mandatory: boolean }
         } = req.body;
 
+        const cover_image = req.file ? `/uploads/${req.file.filename}` : null;
+
         const employerId = req.user?.id;
 
         if (!employerId) {
@@ -78,6 +80,7 @@ export const createInternship = async (req: AuthRequest, res: Response) => {
                 application_deadline,
                 start_date,
                 end_date,
+                cover_image,
                 status: 'open'
             })
             .select()
@@ -86,8 +89,13 @@ export const createInternship = async (req: AuthRequest, res: Response) => {
         if (internshipError) throw internshipError;
 
         // 2. Associate Skills if provided
-        if (skills && Array.isArray(skills) && skills.length > 0) {
-            const internshipSkills = skills.map((s: any) => ({
+        let parsedSkills = skills;
+        if (typeof skills === 'string') {
+            try { parsedSkills = JSON.parse(skills); } catch (e) {}
+        }
+
+        if (parsedSkills && Array.isArray(parsedSkills) && parsedSkills.length > 0) {
+            const internshipSkills = parsedSkills.map((s: any) => ({
                 internship_id: internship.id,
                 skill_id: s.skill_id,
                 required_level: s.required_level || 3,
@@ -121,6 +129,7 @@ export const getMyInternships = async (req: AuthRequest, res: Response) => {
             .from('internships')
             .select(`
                 *,
+                employers (company_name, cover_image),
                 internship_skills (
                     *,
                     skills (name)
@@ -133,5 +142,51 @@ export const getMyInternships = async (req: AuthRequest, res: Response) => {
         res.status(200).json(data);
     } catch (error: any) {
         res.status(500).json({ message: 'Error fetching internships', error: error.message });
+    }
+};
+
+export const getOpenInternships = async (req: AuthRequest, res: Response) => {
+    try {
+        const { data, error } = await supabase
+            .from('internships')
+            .select(`
+                *,
+                employers (company_name, cover_image),
+                internship_skills (
+                    *,
+                    skills (name)
+                )
+            `)
+            .eq('status', 'open')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        res.status(200).json(data);
+    } catch (error: any) {
+        res.status(500).json({ message: 'Error fetching open internships', error: error.message });
+    }
+};
+
+export const getFeaturedInternships = async (req: AuthRequest, res: Response) => {
+    try {
+        const { data, error } = await supabase
+            .from('internships')
+            .select(`
+                *,
+                employers (company_name, cover_image),
+                internship_skills (
+                    *,
+                    skills (name)
+                )
+            `)
+            .eq('status', 'open')
+            .eq('is_featured', true)
+            .order('created_at', { ascending: false })
+            .limit(6);
+
+        if (error) throw error;
+        res.status(200).json(data);
+    } catch (error: any) {
+        res.status(500).json({ message: 'Error fetching featured internships', error: error.message });
     }
 };

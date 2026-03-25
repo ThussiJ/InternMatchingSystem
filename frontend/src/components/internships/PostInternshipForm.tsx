@@ -25,6 +25,7 @@ const PostInternshipForm: React.FC<PostInternshipFormProps> = ({ onSuccess, onCa
     });
 
     const [selectedSkills, setSelectedSkills] = useState<any[]>([]);
+    const [coverImage, setCoverImage] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -34,10 +35,17 @@ const PostInternshipForm: React.FC<PostInternshipFormProps> = ({ onSuccess, onCa
         setError(null);
 
         try {
-            await internshipService.createInternship({
-                ...formData,
-                skills: selectedSkills
+            const submitData = new FormData();
+            Object.entries(formData).forEach(([key, value]) => {
+                if (value !== '') submitData.append(key, value.toString());
             });
+            submitData.append('skills', JSON.stringify(selectedSkills));
+            
+            if (coverImage) {
+                submitData.append('cover_image', coverImage);
+            }
+
+            await internshipService.createInternship(submitData);
             onSuccess();
         } catch (err: any) {
             setError(err.message || 'Something went wrong');
@@ -54,6 +62,12 @@ const PostInternshipForm: React.FC<PostInternshipFormProps> = ({ onSuccess, onCa
                 ? parseFloat(value) 
                 : value 
         }));
+    };
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setCoverImage(e.target.files[0]);
+        }
     };
 
     return (
@@ -73,6 +87,14 @@ const PostInternshipForm: React.FC<PostInternshipFormProps> = ({ onSuccess, onCa
             <form onSubmit={handleSubmit} className="internship-form">
                 <div className="form-section">
                     <h4>Basic Information</h4>
+                    <div className="form-group">
+                        <label>Cover Image (Optional)</label>
+                        <input 
+                            type="file" 
+                            accept="image/*"
+                            onChange={handleImageChange}
+                        />
+                    </div>
                     <div className="form-group">
                         <label>Internship Title</label>
                         <input 

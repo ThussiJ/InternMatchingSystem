@@ -1,1 +1,0 @@
-{"root":["./src/index.ts","./src/test-rls.ts","./src/config/supabase.ts","./src/controllers/auth.ts","./src/controllers/internship.ts","./src/middleware/auth.ts","./src/routes/auth.ts","./src/routes/internship.ts"],"version":"5.9.3"}

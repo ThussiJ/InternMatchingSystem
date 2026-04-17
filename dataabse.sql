@@ -1,244 +1,186 @@
--- ============================================
--- EXTENSIONS
--- ============================================
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-
--- ============================================
--- ENUM TYPES
--- ============================================
-
-CREATE TYPE user_role AS ENUM ('student','employer','admin','supervisor');
-CREATE TYPE internship_mode AS ENUM ('remote','onsite','hybrid');
-CREATE TYPE internship_status AS ENUM ('draft','open','closed','cancelled');
-CREATE TYPE application_status AS ENUM ('pending','shortlisted','selected','rejected','withdrawn');
-CREATE TYPE approval_status AS ENUM ('pending','approved','rejected');
-
--- ============================================
--- USER PROFILES (extends Supabase auth.users)
--- ============================================
-
-CREATE TABLE public.user_profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    role user_role NOT NULL,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    phone VARCHAR(20),
-    avatar_url TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- ============================================
--- STUDENTS
--- ============================================
-
-CREATE TABLE public.students (
-    id UUID PRIMARY KEY REFERENCES public.user_profiles(id) ON DELETE CASCADE,
-    university_id VARCHAR(50) UNIQUE NOT NULL,
-    degree_program VARCHAR(150) NOT NULL,
-    specialization VARCHAR(150),
-    gpa NUMERIC(3,2),
-    graduation_year INT,
-    preferred_location VARCHAR(150),
-    preferred_mode internship_mode,
-    bio TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- ============================================
--- EMPLOYERS
--- ============================================
-
-CREATE TABLE public.employers (
-    id UUID PRIMARY KEY REFERENCES public.user_profiles(id) ON DELETE CASCADE,
-    company_name VARCHAR(200) NOT NULL,
-    industry VARCHAR(150),
-    company_size VARCHAR(50),
-    website TEXT,
-    company_description TEXT,
-    location VARCHAR(150),
-    verified BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- ============================================
--- SKILLS MASTER TABLE
--- ============================================
-
-CREATE TABLE public.skills (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(150) UNIQUE NOT NULL,
-    category VARCHAR(100),
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX idx_skills_name ON public.skills(name);
-
--- ============================================
--- STUDENT SKILLS (MANY TO MANY)
--- ============================================
-
-CREATE TABLE public.student_skills (
-    student_id UUID REFERENCES public.students(id) ON DELETE CASCADE,
-    skill_id UUID REFERENCES public.skills(id) ON DELETE CASCADE,
-    proficiency_level INT NOT NULL CHECK (proficiency_level BETWEEN 1 AND 5),
-    years_of_experience NUMERIC(4,1),
-    PRIMARY KEY (student_id, skill_id)
-);
-
-CREATE INDEX idx_student_skills_skill ON public.student_skills(skill_id);
-
--- ============================================
--- INTERNSHIPS
--- ============================================
-
-CREATE TABLE public.internships (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    employer_id UUID NOT NULL REFERENCES public.employers(id) ON DELETE CASCADE,
-    title VARCHAR(200) NOT NULL,
-    description TEXT NOT NULL,
-    department VARCHAR(150),
-    duration_weeks INT,
-    stipend NUMERIC(10,2),
-    currency VARCHAR(10),
-    location VARCHAR(150),
-    mode internship_mode,
-    minimum_gpa NUMERIC(3,2),
-    application_deadline DATE,
-    start_date DATE,
-    end_date DATE,
-    status internship_status DEFAULT 'draft',
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX idx_internships_status ON public.internships(status);
-CREATE INDEX idx_internships_deadline ON public.internships(application_deadline);
-
--- ============================================
--- INTERNSHIP REQUIRED SKILLS (WEIGHTED)
--- ============================================
-
-CREATE TABLE public.internship_skills (
-    internship_id UUID REFERENCES public.internships(id) ON DELETE CASCADE,
-    skill_id UUID REFERENCES public.skills(id) ON DELETE CASCADE,
-    required_level INT CHECK (required_level BETWEEN 1 AND 5),
-    weight NUMERIC(4,2) DEFAULT 1.0,
-    mandatory BOOLEAN DEFAULT TRUE,
-    PRIMARY KEY (internship_id, skill_id)
-);
-
-CREATE INDEX idx_internship_skills_skill ON public.internship_skills(skill_id);
-
--- ============================================
--- APPLICATIONS
--- ============================================
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
 
 CREATE TABLE public.applications (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    student_id UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
-    internship_id UUID NOT NULL REFERENCES public.internships(id) ON DELETE CASCADE,
-    status application_status DEFAULT 'pending',
-    compatibility_score NUMERIC(5,2),
-    applied_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(student_id, internship_id)
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  student_id uuid NOT NULL,
+  internship_id uuid NOT NULL,
+  status text DEFAULT 'pending'::application_status,
+  compatibility_score numeric,
+  applied_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  supervisor_id uuid,
+  CONSTRAINT applications_pkey PRIMARY KEY (id),
+  CONSTRAINT applications_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id),
+  CONSTRAINT applications_internship_id_fkey FOREIGN KEY (internship_id) REFERENCES public.internships(id),
+  CONSTRAINT applications_supervisor_id_fkey FOREIGN KEY (supervisor_id) REFERENCES public.user_profiles(id)
 );
-
-CREATE INDEX idx_applications_student ON public.applications(student_id);
-CREATE INDEX idx_applications_internship ON public.applications(internship_id);
-
--- ============================================
--- SUPERVISOR ASSIGNMENTS
--- ============================================
-
-CREATE TABLE public.supervisor_assignments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    supervisor_id UUID REFERENCES public.user_profiles(id),
-    student_id UUID REFERENCES public.students(id),
-    internship_id UUID REFERENCES public.internships(id),
-    approval_status approval_status DEFAULT 'pending',
-    approved_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- ============================================
--- INTERNSHIP EVALUATIONS
--- ============================================
-
-CREATE TABLE public.internship_evaluations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    internship_id UUID REFERENCES public.internships(id) ON DELETE CASCADE,
-    student_id UUID REFERENCES public.students(id) ON DELETE CASCADE,
-    employer_feedback TEXT,
-    supervisor_feedback TEXT,
-    performance_score INT CHECK (performance_score BETWEEN 1 AND 100),
-    completed BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- ============================================
--- NOTIFICATIONS
--- ============================================
-
-CREATE TABLE public.notifications (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
-    title VARCHAR(200),
-    message TEXT,
-    type VARCHAR(50),
-    is_read BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX idx_notifications_user ON public.notifications(user_id);
-
--- ============================================
--- AUDIT LOGS
--- ============================================
-
 CREATE TABLE public.audit_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES public.user_profiles(id),
-    action VARCHAR(100),
-    entity_type VARCHAR(100),
-    entity_id UUID,
-    metadata JSONB,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid,
+  action character varying,
+  entity_type character varying,
+  entity_id uuid,
+  metadata jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT audit_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT audit_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_profiles(id)
 );
-
--- ============================================
--- AUTO UPDATE updated_at FUNCTION
--- ============================================
-
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-   NEW.updated_at = NOW();
-   RETURN NEW;
-END;
-$$ language 'plpgsql';
-
--- Attach triggers
-CREATE TRIGGER update_user_profiles_updated_at
-BEFORE UPDATE ON public.user_profiles
-FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
-
-CREATE TRIGGER update_students_updated_at
-BEFORE UPDATE ON public.students
-FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
-
-CREATE TRIGGER update_employers_updated_at
-BEFORE UPDATE ON public.employers
-FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
-
-CREATE TRIGGER update_internships_updated_at
-BEFORE UPDATE ON public.internships
-FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
-
-CREATE TRIGGER update_applications_updated_at
-BEFORE UPDATE ON public.applications
-FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+CREATE TABLE public.employer_contacts (
+  student_id uuid NOT NULL,
+  employer_id uuid NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT employer_contacts_pkey PRIMARY KEY (student_id, employer_id),
+  CONSTRAINT employer_contacts_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.user_profiles(id),
+  CONSTRAINT employer_contacts_employer_id_fkey FOREIGN KEY (employer_id) REFERENCES public.employers(id)
+);
+CREATE TABLE public.employers (
+  id uuid NOT NULL,
+  company_name character varying NOT NULL,
+  industry character varying,
+  company_size character varying,
+  website text,
+  company_description text,
+  location character varying,
+  verified boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  cover_image text,
+  is_featured boolean DEFAULT false,
+  CONSTRAINT employers_pkey PRIMARY KEY (id),
+  CONSTRAINT employers_id_fkey FOREIGN KEY (id) REFERENCES public.user_profiles(id)
+);
+CREATE TABLE public.internship_evaluations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  internship_id uuid,
+  student_id uuid,
+  employer_feedback text,
+  supervisor_feedback text,
+  performance_score integer CHECK (performance_score >= 1 AND performance_score <= 100),
+  completed boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT internship_evaluations_pkey PRIMARY KEY (id),
+  CONSTRAINT internship_evaluations_internship_id_fkey FOREIGN KEY (internship_id) REFERENCES public.internships(id),
+  CONSTRAINT internship_evaluations_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id)
+);
+CREATE TABLE public.internship_skills (
+  internship_id uuid NOT NULL,
+  skill_id uuid NOT NULL,
+  required_level integer CHECK (required_level >= 1 AND required_level <= 5),
+  weight numeric DEFAULT 1.0,
+  mandatory boolean DEFAULT true,
+  CONSTRAINT internship_skills_pkey PRIMARY KEY (internship_id, skill_id),
+  CONSTRAINT internship_skills_internship_id_fkey FOREIGN KEY (internship_id) REFERENCES public.internships(id),
+  CONSTRAINT internship_skills_skill_id_fkey FOREIGN KEY (skill_id) REFERENCES public.skills(id)
+);
+CREATE TABLE public.internships (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  employer_id uuid NOT NULL,
+  title character varying NOT NULL,
+  description text NOT NULL,
+  department character varying,
+  duration_weeks integer,
+  stipend numeric,
+  currency character varying,
+  location character varying,
+  mode USER-DEFINED,
+  minimum_gpa numeric,
+  application_deadline date,
+  start_date date,
+  end_date date,
+  status USER-DEFINED DEFAULT 'draft'::internship_status,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  cover_image text,
+  is_featured boolean DEFAULT false,
+  CONSTRAINT internships_pkey PRIMARY KEY (id),
+  CONSTRAINT internships_employer_id_fkey FOREIGN KEY (employer_id) REFERENCES public.employers(id)
+);
+CREATE TABLE public.notifications (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid,
+  title character varying,
+  message text,
+  type character varying,
+  is_read boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  link text,
+  CONSTRAINT notifications_pkey PRIMARY KEY (id),
+  CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_profiles(id)
+);
+CREATE TABLE public.saved_internships (
+  student_id uuid NOT NULL,
+  internship_id uuid NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT saved_internships_pkey PRIMARY KEY (student_id, internship_id),
+  CONSTRAINT saved_internships_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id),
+  CONSTRAINT saved_internships_internship_id_fkey FOREIGN KEY (internship_id) REFERENCES public.internships(id)
+);
+CREATE TABLE public.skills (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name character varying NOT NULL UNIQUE,
+  category character varying,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT skills_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.student_skills (
+  student_id uuid NOT NULL,
+  skill_id uuid NOT NULL,
+  proficiency_level integer NOT NULL CHECK (proficiency_level >= 1 AND proficiency_level <= 5),
+  years_of_experience numeric,
+  CONSTRAINT student_skills_pkey PRIMARY KEY (student_id, skill_id),
+  CONSTRAINT student_skills_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id),
+  CONSTRAINT student_skills_skill_id_fkey FOREIGN KEY (skill_id) REFERENCES public.skills(id)
+);
+CREATE TABLE public.students (
+  id uuid NOT NULL,
+  university_id character varying NOT NULL UNIQUE,
+  degree_program character varying NOT NULL,
+  specialization character varying,
+  gpa numeric,
+  graduation_year integer,
+  preferred_location character varying,
+  preferred_mode USER-DEFINED,
+  bio text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  cv_path text,
+  profile_picture text,
+  CONSTRAINT students_pkey PRIMARY KEY (id),
+  CONSTRAINT students_id_fkey FOREIGN KEY (id) REFERENCES public.user_profiles(id)
+);
+CREATE TABLE public.supervisor_assignments (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  supervisor_id uuid,
+  student_id uuid,
+  internship_id uuid,
+  approval_status USER-DEFINED DEFAULT 'pending'::approval_status,
+  approved_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT supervisor_assignments_pkey PRIMARY KEY (id),
+  CONSTRAINT supervisor_assignments_supervisor_id_fkey FOREIGN KEY (supervisor_id) REFERENCES public.user_profiles(id),
+  CONSTRAINT supervisor_assignments_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id),
+  CONSTRAINT supervisor_assignments_internship_id_fkey FOREIGN KEY (internship_id) REFERENCES public.internships(id)
+);
+CREATE TABLE public.supervisors (
+  id uuid NOT NULL,
+  employer_id uuid,
+  designation text,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT supervisors_pkey PRIMARY KEY (id),
+  CONSTRAINT supervisors_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
+  CONSTRAINT supervisors_employer_id_fkey FOREIGN KEY (employer_id) REFERENCES public.employers(id)
+);
+CREATE TABLE public.user_profiles (
+  id uuid NOT NULL,
+  role USER-DEFINED NOT NULL,
+  first_name character varying NOT NULL,
+  last_name character varying NOT NULL,
+  phone character varying,
+  avatar_url text,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT user_profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
+);

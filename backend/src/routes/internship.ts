@@ -6,7 +6,7 @@ import { upload } from '../middleware/upload';
 const router = Router();
 
 // Public/Authenticated routes
-router.get('/featured', authenticateToken, internshipController.getFeaturedInternships);
+router.get('/featured', internshipController.getFeaturedInternships);
 router.get('/', authenticateToken, internshipController.getOpenInternships);
 router.get('/skills', authenticateToken, internshipController.getAllSkills);
 router.post('/skills', authenticateToken, internshipController.createSkill);
@@ -14,5 +14,8 @@ router.post('/skills', authenticateToken, internshipController.createSkill);
 // Employer routes
 router.post('/', authenticateToken, requireRole(['employer']), upload.single('cover_image'), internshipController.createInternship);
 router.get('/my', authenticateToken, requireRole(['employer']), internshipController.getMyInternships);
+router.get('/:id', authenticateToken, internshipController.getInternshipById);
+router.put('/:id', authenticateToken, requireRole(['employer']), upload.single('cover_image'), internshipController.updateInternship);
+router.delete('/:id', authenticateToken, requireRole(['employer']), internshipController.deleteInternship);
 
 export default router;

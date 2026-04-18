@@ -14,7 +14,13 @@ router.get('/internships', adminController.getAllInternships);
 router.patch('/internships/:id/feature', adminController.toggleInternshipFeatured);
 
 router.get('/users', adminController.getAllUsers);
+router.get('/analytics', adminController.getAnalytics);
 router.patch('/users/:id/status', adminController.toggleUserStatus);
 router.delete('/users/:id', adminController.deleteUser);
+
+router.use((req, res) => {
+    console.log(`[admin-router] Unmatched request: ${req.method} ${req.url}`);
+    res.status(404).json({ message: 'Admin route not found' });
+});
 
 export default router;

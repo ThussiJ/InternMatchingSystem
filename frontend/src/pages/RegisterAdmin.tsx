@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/api';
 import { motion } from 'framer-motion';
-import { AlertCircle, Shield } from 'lucide-react';
+import { AlertCircle, Shield, User, Mail, Lock, ShieldCheck } from 'lucide-react';
 import '../styles/auth.css';
 
 const RegisterAdmin: React.FC = () => {
@@ -73,32 +73,47 @@ const RegisterAdmin: React.FC = () => {
                 <form onSubmit={handleSubmit} className="auth-form">
                     <div className="form-group">
                         <label>First Name</label>
-                        <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} required />
+                        <div className="input-with-icon">
+                            <User size={18} className="input-icon" />
+                            <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="Admin" required />
+                        </div>
                     </div>
                     <div className="form-group">
                         <label>Last Name</label>
-                        <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} required />
+                        <div className="input-with-icon">
+                            <User size={18} className="input-icon" />
+                            <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="User" required />
+                        </div>
                     </div>
 
                     <div className="form-group">
                         <label>Admin Email Address</label>
-                        <input type="email" name="email" value={formData.email} onChange={handleChange} required />
+                        <div className="input-with-icon">
+                            <Mail size={18} className="input-icon" />
+                            <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="admin@system.com" required />
+                        </div>
                     </div>
                     <div className="form-group">
                         <label>Secure Password</label>
-                        <input type="password" name="password" value={formData.password} onChange={handleChange} required minLength={8} />
+                        <div className="input-with-icon">
+                            <Lock size={18} className="input-icon" />
+                            <input type="password" name="password" value={formData.password} onChange={handleChange} placeholder="••••••••" required minLength={8} />
+                        </div>
                     </div>
 
                     <div className="form-group">
                         <label>System Verification Code</label>
-                        <input
-                            type="password"
-                            name="admin_verification_code"
-                            value={formData.admin_verification_code}
-                            onChange={handleChange}
-                            placeholder="Required for admin access"
-                            required
-                        />
+                        <div className="input-with-icon">
+                            <ShieldCheck size={18} className="input-icon" />
+                            <input
+                                type="password"
+                                name="admin_verification_code"
+                                value={formData.admin_verification_code}
+                                onChange={handleChange}
+                                placeholder="Required for admin access"
+                                required
+                            />
+                        </div>
                     </div>
 
                     <button type="submit" className="btn btn-primary auth-submit" disabled={isLoading}>

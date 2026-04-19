@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/api';
 import { motion } from 'framer-motion';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, User, Mail, Lock, Phone, Building, Briefcase, Users, Link as LinkIcon } from 'lucide-react';
 import '../styles/auth.css';
 
 const RegisterEmployer: React.FC = () => {
@@ -72,25 +72,40 @@ const RegisterEmployer: React.FC = () => {
 
                     <div className="form-group">
                         <label>First Name</label>
-                        <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} required />
+                        <div className="input-with-icon">
+                            <User size={18} className="input-icon" />
+                            <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="John" required />
+                        </div>
                     </div>
                     <div className="form-group">
                         <label>Last Name</label>
-                        <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} required />
+                        <div className="input-with-icon">
+                            <User size={18} className="input-icon" />
+                            <input type="text" name="lastName" value={formData.lastName} placeholder="Doe" onChange={handleChange} required />
+                        </div>
                     </div>
 
                     <div className="form-group">
                         <label>Email Address</label>
-                        <input type="email" name="email" value={formData.email} onChange={handleChange} required />
+                        <div className="input-with-icon">
+                            <Mail size={18} className="input-icon" />
+                            <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="employer@company.com" required />
+                        </div>
                     </div>
                     <div className="form-group">
                         <label>Password</label>
-                        <input type="password" name="password" value={formData.password} onChange={handleChange} required minLength={6} />
+                        <div className="input-with-icon">
+                            <Lock size={18} className="input-icon" />
+                            <input type="password" name="password" value={formData.password} onChange={handleChange} placeholder="••••••••" required minLength={6} />
+                        </div>
                     </div>
 
                     <div className="form-group full-width">
                         <label>Phone Number</label>
-                        <input type="tel" name="phone" value={formData.phone} onChange={handleChange} />
+                        <div className="input-with-icon">
+                            <Phone size={18} className="input-icon" />
+                            <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="+1 (555) 000-0000" />
+                        </div>
                     </div>
 
                     {/* Company Info */}
@@ -100,37 +115,49 @@ const RegisterEmployer: React.FC = () => {
 
                     <div className="form-group full-width">
                         <label>Company/Organization Name</label>
-                        <input type="text" name="company_name" value={formData.company_name} onChange={handleChange} required />
+                        <div className="input-with-icon">
+                            <Building size={18} className="input-icon" />
+                            <input type="text" name="company_name" value={formData.company_name} onChange={handleChange} placeholder="Acme Corp" required />
+                        </div>
                     </div>
 
                     <div className="form-group">
                         <label>Industry</label>
-                        <select name="industry" value={formData.industry} onChange={handleChange} required>
-                            <option value="">Select an industry</option>
-                            <option value="Technology">Technology</option>
-                            <option value="Finance">Finance</option>
-                            <option value="Healthcare">Healthcare</option>
-                            <option value="Manufacturing">Manufacturing</option>
-                            <option value="Retail">Retail</option>
-                            <option value="Education">Education</option>
-                            <option value="Other">Other</option>
-                        </select>
+                        <div className="input-with-icon">
+                            <Briefcase size={18} className="input-icon" />
+                            <select name="industry" value={formData.industry} onChange={handleChange} required>
+                                <option value="">Select an industry</option>
+                                <option value="Technology">Technology</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Manufacturing">Manufacturing</option>
+                                <option value="Retail">Retail</option>
+                                <option value="Education">Education</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
                     </div>
                     <div className="form-group">
                         <label>Company Size</label>
-                        <select name="company_size" value={formData.company_size} onChange={handleChange} required>
-                            <option value="">Select size</option>
-                            <option value="1-10">1-10 Employees</option>
-                            <option value="11-50">11-50 Employees</option>
-                            <option value="51-200">51-200 Employees</option>
-                            <option value="201-500">201-500 Employees</option>
-                            <option value="500+">500+ Employees</option>
-                        </select>
+                        <div className="input-with-icon">
+                            <Users size={18} className="input-icon" />
+                            <select name="company_size" value={formData.company_size} onChange={handleChange} required>
+                                <option value="">Select size</option>
+                                <option value="1-10">1-10 Employees</option>
+                                <option value="11-50">11-50 Employees</option>
+                                <option value="51-200">51-200 Employees</option>
+                                <option value="201-500">201-500 Employees</option>
+                                <option value="500+">500+ Employees</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div className="form-group full-width">
                         <label>Company Website</label>
-                        <input type="url" name="website" value={formData.website} onChange={handleChange} placeholder="https://..." />
+                        <div className="input-with-icon">
+                            <LinkIcon size={18} className="input-icon" />
+                            <input type="url" name="website" value={formData.website} onChange={handleChange} placeholder="https://company.com" />
+                        </div>
                     </div>
 
                     <button type="submit" className="btn btn-primary auth-submit full-width" disabled={isLoading}>

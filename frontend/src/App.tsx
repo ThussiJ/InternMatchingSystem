@@ -15,10 +15,14 @@ import Supervisors from './pages/dashboards/Supervisors';
 import SupervisorDashboard from './pages/dashboards/SupervisorDashboard';
 import MyApplications from './pages/dashboards/MyApplications';
 import AdminDashboard from './pages/dashboards/AdminDashboard';
+import AdminAnalytics from './pages/dashboards/AdminAnalytics';
 import UserManagement from './pages/dashboards/UserManagement';
 import EmployerApplications from './pages/dashboards/EmployerApplications';
 import SupervisorApplications from './pages/dashboards/SupervisorApplications';
 import SavedInternships from './pages/dashboards/SavedInternships';
+import Companies from './pages/dashboards/Companies';
+import AllCompaniesPublic from './pages/public/AllCompaniesPublic';
+import CompanyPublicProfile from './pages/public/CompanyPublicProfile';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import './index.css';
@@ -34,6 +38,8 @@ function App() {
           <Route path="/register" element={<RegisterStudent />} />
           <Route path="/employer-register" element={<RegisterEmployer />} />
           <Route path="/admin-setup-portal" element={<RegisterAdmin />} />
+          <Route path="/companies" element={<AllCompaniesPublic />} />
+          <Route path="/companies/:id" element={<CompanyPublicProfile />} />
 
           {/* Protected Dashboards */}
           <Route
@@ -85,6 +91,14 @@ function App() {
             }
           />
           <Route
+            path="/student/companies"
+            element={
+              <ProtectedRoute allowedRoles={['student']}>
+                <Companies />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/employer/dashboard"
             element={
               <ProtectedRoute allowedRoles={['employer']}>
@@ -102,6 +116,14 @@ function App() {
           />
           <Route
             path="/employer/post-internship"
+            element={
+              <ProtectedRoute allowedRoles={['employer']}>
+                <CreatePosting />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employer/edit-internship/:id"
             element={
               <ProtectedRoute allowedRoles={['employer']}>
                 <CreatePosting />
@@ -153,6 +175,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <UserManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/analytics"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminAnalytics />
               </ProtectedRoute>
             }
           />

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/api';
 import { motion } from 'framer-motion';
 import { Mail, Lock, AlertCircle } from 'lucide-react';
+import '../styles/auth.css';
 
 const SignIn: React.FC = () => {
     const [email, setEmail] = useState('');

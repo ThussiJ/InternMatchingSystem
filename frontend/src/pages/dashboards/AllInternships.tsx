@@ -4,55 +4,31 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Briefcase, FileText, Star, LogOut, Code, MapPin, DollarSign, Clock, Search, User, Building2 } from 'lucide-react';
 import '../../styles/dashboard.css';
-import { internshipService, studentService, savedInternshipService } from '../../services/api';
+import { internshipService, savedInternshipService } from '../../services/api';
 import DashboardHeader from '../../components/layout/DashboardHeader';
 import ApplyModal from '../../components/internships/ApplyModal';
 import { Bookmark } from 'lucide-react';
 
-const InternDashboard: React.FC = () => {
+const AllInternships: React.FC = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     
-    const [recommended, setRecommended] = useState<any[]>([]);
+    const [internships, setInternships] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedInternship, setSelectedInternship] = useState<any>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        fetchData();
+        fetchInternships();
     }, []);
 
-    const fetchData = async () => {
+    const fetchInternships = async () => {
         try {
-            const [internshipsData, studentSkillsData] = await Promise.all([
-                internshipService.getOpenInternships(),
-                studentService.getSkills()
-            ]);
-            
-            const studentSkillIds = new Set(studentSkillsData.map((s: any) => s.skill_id));
-
-            // Calculate match percentage and filter
-            const recommendations = internshipsData.map((intern: any) => {
-                const requiredSkills = intern.internship_skills || [];
-                let matchCount = 0;
-                
-                requiredSkills.forEach((reqSkill: any) => {
-                    if (studentSkillIds.has(reqSkill.skill_id)) {
-                        matchCount++;
-                    }
-                });
-
-                const totalRequired = requiredSkills.length;
-                const matchPercentage = totalRequired > 0 ? Math.round((matchCount / totalRequired) * 100) : 100;
-
-                return { ...intern, matchPercentage, matchCount, totalRequired };
-            }).filter((intern: any) => intern.matchCount > 0 || intern.totalRequired === 0)
-              .sort((a: any, b: any) => b.matchPercentage - a.matchPercentage);
-
-            setRecommended(recommendations);
+            const data = await internshipService.getOpenInternships();
+            setInternships(data);
         } catch (error) {
-            console.error('Failed to fetch recommendations:', error);
+            console.error('Failed to fetch internships:', error);
         } finally {
             setLoading(false);
         }
@@ -85,7 +61,7 @@ const InternDashboard: React.FC = () => {
                     <Link to="/student/all-internships" className={location.pathname === '/student/all-internships' ? 'active' : ''}><Search size={18} /> All Internships</Link>
                     <Link to="/student/companies" className={location.pathname === '/student/companies' ? 'active' : ''}><Building2 size={18} /> Companies</Link>
                     <Link to="/student/profile" className={location.pathname === '/student/profile' ? 'active' : ''}><User size={18} /> My Profile</Link>
-                    <Link to="/student/skills" className={location.pathname === '/student/skills' ? 'active' : ''}><Code size={18} /> Skill Profile</Link>
+                    <Link to="/student/skills"><Code size={18} /> Skill Profile</Link>
                     <Link to="/student/applications" className={location.pathname === '/student/applications' ? 'active' : ''}><FileText size={18} /> My Applications</Link>
                     <Link to="/student/saved" className={location.pathname === '/student/saved' ? 'active' : ''}><Star size={18} /> Saved Internships</Link>
                 </nav>
@@ -96,28 +72,22 @@ const InternDashboard: React.FC = () => {
 
             <main className="dashboard-main" style={{ overflowY: 'auto', padding: '2rem' }}>
                 <DashboardHeader 
-                    title={`For You, ${user?.firstName}! ✨`} 
-                    subtitle="Opportunities matched directly to your skill profile" 
+                    title="All Opportunities 🌍" 
+                    subtitle="Browse all currently open internship positions" 
                 />
 
                 <div className="dashboard-content">
                     {loading ? (
-                        <p>Loading recommendations...</p>
-                    ) : recommended.length === 0 ? (
+                        <p>Loading internships...</p>
+                    ) : internships.length === 0 ? (
                         <div style={{ background: 'var(--color-surface)', padding: '3rem', borderRadius: '12px', border: '1px dashed var(--color-border)', textAlign: 'center' }}>
-                            <Code size={48} style={{ color: 'var(--color-text-muted)', margin: '0 auto 1rem' }} />
-                            <h3 style={{ margin: '0 0 0.5rem 0' }}>No Matches Found</h3>
-                            <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>We couldn't find any internships matching your current skills.</p>
-                            <button 
-                                onClick={() => navigate('/student/skills')}
-                                style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', background: 'var(--color-primary)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
-                            >
-                                Update Your Skills
-                            </button>
+                            <Search size={48} style={{ color: 'var(--color-text-muted)', margin: '0 auto 1rem' }} />
+                            <h3 style={{ margin: '0 0 0.5rem 0' }}>No Openings</h3>
+                            <p style={{ color: 'var(--color-text-muted)' }}>Check back later for new opportunities!</p>
                         </div>
                     ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
-                            {recommended.map((intern: any, index: number) => (
+                            {internships.map((intern: any, index: number) => (
                                 <motion.div 
                                     key={intern.id}
                                     initial={{ opacity: 0, y: 20 }} 
@@ -128,40 +98,36 @@ const InternDashboard: React.FC = () => {
                                         background: 'var(--color-surface)',
                                         border: '1px solid var(--color-border)',
                                         borderRadius: '12px',
+                                        overflow: 'hidden',
                                         padding: '1.5rem',
                                         display: 'flex',
                                         flexDirection: 'column',
                                         gap: '1.25rem',
                                         transition: 'all 0.2s',
                                         cursor: 'pointer',
-                                        position: 'relative',
-                                        overflow: 'hidden'
                                     }}
                                     whileHover={{ y: -4, borderColor: 'var(--color-primary)', boxShadow: '0 12px 24px rgba(0,0,0,0.1)' }}
                                 >
-                                    <div style={{ position: 'absolute', top: 0, right: 0, background: 'rgba(34, 197, 94, 0.9)', color: 'white', padding: '0.5rem 1rem', borderBottomLeftRadius: '12px', fontWeight: 'bold', fontSize: '0.875rem', zIndex: 10 }}>
-                                        {intern.matchPercentage}% Match
-                                    </div>
-                                    <button 
-                                        onClick={(e) => handleSave(e, intern.id)}
-                                        style={{ 
-                                            position: 'absolute', top: '10px', left: '10px', 
-                                            background: 'rgba(255,255,255,0.9)', border: 'none', 
-                                            padding: '0.5rem', borderRadius: '50%', 
-                                            cursor: 'pointer', zIndex: 10,
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                                        }}
-                                        title="Save for later"
-                                    >
-                                        <Bookmark size={18} color="var(--color-primary)" />
-                                    </button>
-                                    
                                     <div style={{ 
                                         height: '140px', 
                                         margin: '-1.5rem -1.5rem 0 -1.5rem',
-                                        background: 'var(--color-surface)'
+                                        background: 'var(--color-surface)',
+                                        position: 'relative'
                                     }}>
+                                        <button 
+                                            onClick={(e) => handleSave(e, intern.id)}
+                                            style={{ 
+                                                position: 'absolute', top: '10px', left: '10px', 
+                                                background: 'rgba(255,255,255,0.9)', border: 'none', 
+                                                padding: '0.5rem', borderRadius: '50%', 
+                                                cursor: 'pointer', zIndex: 10,
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                            }}
+                                            title="Save for later"
+                                        >
+                                            <Bookmark size={18} color="var(--color-primary)" />
+                                        </button>
                                         <img 
                                             src={intern.cover_image ? `http://localhost:5005${intern.cover_image}` : (intern.employers?.cover_image ? `http://localhost:5005${intern.employers.cover_image}` : 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80')} 
                                             alt={`${intern.title} cover`}
@@ -171,8 +137,7 @@ const InternDashboard: React.FC = () => {
                                             }}
                                         />
                                     </div>
-                                    
-                                    <div style={{ paddingRight: '0' }}>
+                                    <div>
                                         <h3 style={{ margin: 0, color: 'var(--color-text-main)', fontSize: '1.25rem', lineHeight: 1.3, marginBottom: '0.25rem' }}>{intern.title}</h3>
                                         <p style={{ margin: 0, color: 'var(--color-primary)', fontWeight: '600', fontSize: '1rem' }}>{intern.employers?.company_name}</p>
                                     </div>
@@ -243,16 +208,16 @@ const InternDashboard: React.FC = () => {
                             ))}
                         </div>
                     )}
-                </div>
 
-                <ApplyModal 
-                    isOpen={isModalOpen} 
-                    onClose={() => setIsModalOpen(false)} 
-                    internship={selectedInternship} 
-                />
+                    <ApplyModal 
+                        isOpen={isModalOpen} 
+                        onClose={() => setIsModalOpen(false)} 
+                        internship={selectedInternship} 
+                    />
+                </div>
             </main>
         </div>
     );
 };
 
-export default InternDashboard;
+export default AllInternships;
